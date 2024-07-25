@@ -1,15 +1,13 @@
 use crate::api_structs::*;
 
+/*
+* ignored fields: href, limit, next, offset, previous
+*/
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
-pub struct FollowedPlaylists {
-    pub href: String,
-    pub items: Vec<Playlist>,
-    pub limit : u32,
-    pub next : Option<String>,
-    pub offset : u32,
-    pub previous : Option<String>,
-    pub total : u32,
+struct FollowedPlaylists {
+    items: Vec<Playlist>,
+    total : u32,
 }
 
 /*
@@ -44,11 +42,20 @@ pub struct Tracks {
     pub total: u32,
 }
 
-pub fn debug_print_followed_playlists(playlists: &FollowedPlaylists) {
+pub fn debug_print_followed_playlists(playlists: &Vec<Playlist>) {
+    println!("\ntotal: {}", playlists.len());
     println!("{:<100} | {:>10} | {:>11} | {:>12}", "name", "pub.", "coll.", "tracks num.");
     println!("{}", "-".repeat(143));
 
-    for p in &playlists.items {
+    for p in playlists {
         println!("{:<100} | {:>10} | {:>11} | {:>12}", p.name, p.public, p.collaborative, p.tracks.total);
     }
+}
+
+pub fn get_followed_playlists(file_path: &str) -> Vec<Playlist> {
+    let file = File::open(file_path).expect("could not open the JSON file");
+    let reader = BufReader::new(file);
+
+    let playlists: FollowedPlaylists = serde_json::from_reader(reader).unwrap();
+    playlists.items
 }

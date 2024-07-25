@@ -6,14 +6,14 @@
 
 mod api_structs;
 
-use std::{fs::File, io::BufReader};
-use crate::api_structs::playlists::{FollowedPlaylists, debug_print_followed_playlists};
+use api_structs::{artists::{debug_print_followed_artists, get_followed_artists}, playlists::{debug_print_followed_playlists, get_followed_playlists}};
 
 fn main() {
-    let file = File::open("./data/followed_playlists.json").expect("could not open the JSON file");
-    let reader = BufReader::new(file);
+    let playlists_path = "./data/followed_playlists.json";
+    let playlists = get_followed_playlists(playlists_path);
+    debug_print_followed_playlists(&playlists);
 
-    let data: FollowedPlaylists = serde_json::from_reader(reader).unwrap();
-
-    debug_print_followed_playlists(&data);
+    let artists_path = "./data/followed_artists.json";
+    let artists = get_followed_artists(artists_path);
+    debug_print_followed_artists(&artists);
 }
