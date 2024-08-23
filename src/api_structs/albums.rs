@@ -1,18 +1,18 @@
-use crate::api_structs::{Deserialize, ExternalUrls, File, BufReader};
+use crate::api_structs::{Deserialize, Serialize, ExternalUrls, File, BufReader};
 use crate::api_structs::artists::Artist;
 
 /*
 * ignored fields: href, limit, next, offset, previous
 */
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct SavedAlbums {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SavedAlbums {
     total: u32,
     items: Vec<SavedAlbumsItem>,
 } 
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SavedAlbumsItem {
     added_at: String,
     album: Album,
@@ -22,7 +22,7 @@ pub struct SavedAlbumsItem {
 * ignored fields: 
 */
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Album {
     #[serde(alias = "album_type")]
     _type: String,   // album or single
@@ -37,21 +37,21 @@ pub struct Album {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Tracks {
     items: Vec<TracksItem>,
     total: u32,
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct TracksItem {
     external_urls: ExternalUrls, 
     name: String,
 }
 
 pub fn debug_print_saved_albums(albums: &Vec<SavedAlbumsItem>) {
-    println!("\ntotal: {}", albums.len());
+    println!("\n===== ALBUMS =====\ntotal: {}", albums.len());
     println!("{:<50} | {:<11}", "name", "tot. tracks");
     println!("{}", "-".repeat(200));
 

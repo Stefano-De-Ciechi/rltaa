@@ -31,7 +31,7 @@ pub struct Artist {
 }
 
 pub fn debug_print_followed_artists(artists: &Vec<Artist>) {
-    println!("\ntotal: {}", artists.len());
+    println!("\n===== ARTISTS =====\ntotal: {}", artists.len());
     println!("{:<50} | {:<150}", "name", "genres");
     println!("{}", "-".repeat(200));
 

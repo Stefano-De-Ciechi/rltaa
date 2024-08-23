@@ -1,19 +1,19 @@
 use reqwest::{self};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, env};
-use crate::api_structs::artists::FollowedArtists;
+use crate::api_structs::{albums::SavedAlbums, artists::FollowedArtists, playlists::FollowedPlaylists};
 use base64::{engine::general_purpose, Engine};
 
-// #[derive(Debug)]
-// pub struct Token {
-//     pub access_token: String,
-//     pub token_type: String,
-//     pub expires: u32,
-// }
+#[derive(Debug, Deserialize)]
+struct RefreshTokenResponse {
+    access_token: String,
+    #[serde(alias = "token_type")] _token_type: String,
+    #[serde(alias = "expires_in")] _expires_in: u32,
+    refresh_token: Option<String>, 
+    #[serde(alias = "scope")] _scope: String, 
+}
 
 pub struct SpotifyAPI { 
-    // email: String,
-    // username: String,
     client_id: String,
     client_secret: String,
     token: String,
@@ -21,11 +21,10 @@ pub struct SpotifyAPI {
     http_client: reqwest::blocking::Client,
 }
 
+// TODO expand to saved songs and episodes too
 impl SpotifyAPI {
 
     pub fn new() -> Self {
-        // let email = env::var("EMAIL").unwrap();
-        // let username = env::var("USERNAME").unwrap();
         let client_id = env::var("CLIENT_ID").unwrap();
         let client_secret = env::var("CLIENT_SECRET").unwrap();
 
@@ -35,8 +34,6 @@ impl SpotifyAPI {
         let http_client = reqwest::blocking::Client::new();
 
         Self {
-            // email,
-            // username,
             client_id,
             client_secret,
             token,
@@ -79,47 +76,16 @@ impl SpotifyAPI {
 
     }
 
-    // "https://api.spotify.com/v1/me/following?type=artist"
     pub fn update_followed_artists(&self) {
-
-        /*let token_header = format!("Bearer {}", self.token);
-
-        let res = self.http_client
-            .get("https://api.spotify.com/v1/me/following?type=artist")  
-            .header("Accept", "application/json")
-            .header("Content-Type", "application/json")
-            .header("Authorization", token_header)
-            .send();
-
-        let res = match res {
-            Ok(r) => r,
-            Err(_) => {
-                eprintln!("could not receive response");
-                return;
-            },
-        };
-
-        if !res.status().is_success() {
-            eprintln!("unsuccessful request, status: {}", res.status());
-            return;
-        }
-
-        let body = res.json::<FollowedArtists>();
-        let followed_artists = match body {
-            Ok(a) => a,
-            Err(_) => {
-                eprintln!("could not deserialize json body");
-                return;
-            }
-        };*/
-
-        /*let file_path = "./data/followed_artists.json";
-        let str = serde_json::to_string_pretty(&followed_artists).unwrap();
-        std::fs::write(file_path, str).unwrap();*/
-
-        //save_to_file(&followed_artists, "./data/followed_artists.json");
-
         self.update_data::<FollowedArtists>("https://api.spotify.com/v1/me/following?type=artist", "./data/followed_artists.json");
+    }
+
+    pub fn update_followed_playlists(&self) {
+        self.update_data::<FollowedPlaylists>("https://api.spotify.com/v1/me/playlists", "./data/followed_playlists.json");
+    }
+
+    pub fn update_saved_albums(&self) {
+        self.update_data::<SavedAlbums>("https://api.spotify.com/v1/me/albums", "./data/saved_albums.json");
     }
 
     // TODO add a way to call refresh_token only if the previous one has expired
@@ -156,18 +122,16 @@ impl SpotifyAPI {
             return;
         };
 
-        eprintln!("previous access token: {}", self.token);
-
         self.token = res_json.access_token;
-        env::set_var("TOKEN", &self.token);
-        eprintln!("new access token updated and saved to .env file");
+        //env::set_var("TOKEN", &self.token);
+        eprintln!("new access token received");
 
         match res_json.refresh_token {
             Some(token) => {
                 self.refresh_token = token;
-                env::set_var("REFRESH_TOKEN", &self.refresh_token);
+                //env::set_var("REFRESH_TOKEN", &self.refresh_token);
             },
-            None => eprintln!("no refresh token received, skipping .env update"),
+            None => eprintln!("no refresh token received"),
         };
 
         eprintln!("access token: {}", self.token);
@@ -175,21 +139,10 @@ impl SpotifyAPI {
 
     }
 
-}
+    // TODO implement a way to write the new tokens directly to the .env file
+    //pub fn save_to_env_file(&self) { }
 
-#[derive(Debug, Deserialize)]
-struct RefreshTokenResponse {
-    access_token: String,
-    #[serde(alias = "token_type")] _token_type: String,
-    #[serde(alias = "expires_in")] _expires_in: u32,
-    refresh_token: Option<String>, 
-    #[serde(alias = "scope")] _scope: String, 
 }
-
-// fn save_to_file<T: serde::Serialize>(data: T, path: &str) {
-//     let str = serde_json::to_string_pretty(&data).unwrap();
-//     std::fs::write(path, str).unwrap();
-// }
 
 fn save_to_file<T>(data: T, path: &str) where T: Serialize {
     let str = serde_json::to_string_pretty(&data).unwrap();

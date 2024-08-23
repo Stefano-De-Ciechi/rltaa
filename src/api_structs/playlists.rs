@@ -1,11 +1,11 @@
-use crate::api_structs::{Deserialize, ExternalUrls, Owner, BufReader, File};
+use crate::api_structs::{Deserialize, Serialize, ExternalUrls, Owner, BufReader, File};
 
 /*
 * ignored fields: href, limit, next, offset, previous
 */
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct FollowedPlaylists {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FollowedPlaylists {
     items: Vec<Playlist>,
     total : u32,
 }
@@ -14,7 +14,7 @@ struct FollowedPlaylists {
 * ignored fields: images, primary-color, snapshot-id, tracks, uri
 */
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Playlist {
     pub collaborative: bool,
     pub description: String,
@@ -32,13 +32,13 @@ pub struct Playlist {
 * ignored fields: href
 */
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Tracks {
     pub total: u32,
 }
 
 pub fn debug_print_followed_playlists(playlists: &Vec<Playlist>) {
-    println!("\ntotal: {}", playlists.len());
+    println!("\n===== PLAYLISTS =====\ntotal: {}", playlists.len());
     println!("{:<50} | {:>10} | {:>11} | {:>12}", "name", "pub.", "coll.", "tracks num.");
     println!("{}", "-".repeat(93));
 
