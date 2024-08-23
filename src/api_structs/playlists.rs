@@ -1,4 +1,4 @@
-use crate::api_structs::*;
+use crate::api_structs::{Deserialize, ExternalUrls, Owner, BufReader, File};
 
 /*
 * ignored fields: href, limit, next, offset, previous
@@ -18,19 +18,14 @@ struct FollowedPlaylists {
 pub struct Playlist {
     pub collaborative: bool,
     pub description: String,
-
-    #[serde(alias = "external-urls")]
-    pub external_urls: ExternalUrls,
-
+    #[serde(alias = "external-urls")] pub external_urls: ExternalUrls,
     pub href: String,
     pub id: String,
     pub name: String,
     pub owner: Owner,
     pub public: bool,
     pub tracks: Tracks,
-
-    #[serde(alias = "type")]
-    pub obj_type: String,
+    #[serde(alias = "type")] pub obj_type: String,
 }
 
 /*
@@ -44,11 +39,11 @@ pub struct Tracks {
 
 pub fn debug_print_followed_playlists(playlists: &Vec<Playlist>) {
     println!("\ntotal: {}", playlists.len());
-    println!("{:<100} | {:>10} | {:>11} | {:>12}", "name", "pub.", "coll.", "tracks num.");
-    println!("{}", "-".repeat(143));
+    println!("{:<50} | {:>10} | {:>11} | {:>12}", "name", "pub.", "coll.", "tracks num.");
+    println!("{}", "-".repeat(93));
 
     for p in playlists {
-        println!("{:<100} | {:>10} | {:>11} | {:>12}", p.name, p.public, p.collaborative, p.tracks.total);
+        println!("{:<50} | {:>10} | {:>11} | {:>12}", p.name, p.public, p.collaborative, p.tracks.total);
     }
 }
 
