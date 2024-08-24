@@ -5,9 +5,18 @@ use crate::api_structs::{Deserialize, Serialize, ExternalUrls, Owner, BufReader,
 */
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Serialize)]
-pub struct FollowedPlaylists {
+pub struct Followed {
     items: Vec<Playlist>,
     total : u32,
+}
+
+impl Followed {
+    const fn empty() -> Self {
+        Self {
+            items: vec![],
+            total: 0,
+        }
+    }
 }
 
 /*
@@ -37,7 +46,7 @@ pub struct Tracks {
     pub total: u32,
 }
 
-pub fn debug_print_followed_playlists(playlists: &Vec<Playlist>) {
+pub fn debug_print_followed(playlists: &Vec<Playlist>) {
     println!("\n===== PLAYLISTS =====\ntotal: {}", playlists.len());
     println!("{:<50} | {:>10} | {:>11} | {:>12}", "name", "pub.", "coll.", "tracks num.");
     println!("{}", "-".repeat(93));
@@ -47,10 +56,24 @@ pub fn debug_print_followed_playlists(playlists: &Vec<Playlist>) {
     }
 }
 
-pub fn get_followed_playlists(file_path: &str) -> Vec<Playlist> {
-    let file = File::open(file_path).expect("could not open the JSON file");
+pub fn get_followed() -> Vec<Playlist> {
+    get_followed_p("./data/followed_playlists.json")
+}
+
+pub fn get_followed_p(file_path: &str) -> Vec<Playlist> {
+    let Ok(file) = File::open(file_path) else {
+        eprintln!("couldn't open followed_playlists.json");
+        return vec![];
+    };
+
     let reader = BufReader::new(file);
 
-    let playlists: FollowedPlaylists = serde_json::from_reader(reader).unwrap();
+    let playlists: Followed = serde_json::from_reader(reader)
+        .unwrap_or_else(|_| {
+            eprintln!("couldn't deserialize followed playlists from json file");
+            Followed::empty()
+    });
+
     playlists.items
+ 
 }

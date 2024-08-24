@@ -1,7 +1,7 @@
 use reqwest::{self};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{collections::HashMap, env};
-use crate::api_structs::{albums::SavedAlbums, artists::FollowedArtists, playlists::FollowedPlaylists};
+use std::collections::HashMap;
+use crate::api_structs::{albums, artists, playlists};
 use base64::{engine::general_purpose, Engine};
 
 #[derive(Debug, Deserialize)]
@@ -25,11 +25,11 @@ pub struct SpotifyAPI {
 impl SpotifyAPI {
 
     pub fn new() -> Self {
-        let client_id = env::var("CLIENT_ID").unwrap();
-        let client_secret = env::var("CLIENT_SECRET").unwrap();
-
-        let token = env::var("TOKEN").unwrap();
-        let refresh_token = env::var("REFRESH_TOKEN").unwrap();
+        // TODO implement some sort of token caching system
+        let client_id = read_from_env_file("CLIENT_ID");
+        let client_secret = read_from_env_file("CLIENT_SECRET");
+        let token = read_from_env_file("TOKEN");
+        let refresh_token = read_from_env_file("REFRESH_TOKEN");
 
         let http_client = reqwest::blocking::Client::new();
 
@@ -41,7 +41,7 @@ impl SpotifyAPI {
             http_client,
         }
     }
-
+ 
     // TODO implement generic function where you just need to pass a struct, the request url and a path and it
     // automatically does the request and data serialization to json file
     pub fn update_data<T>(&self, url: &str, path: &str) where T: Serialize + DeserializeOwned {
@@ -77,15 +77,15 @@ impl SpotifyAPI {
     }
 
     pub fn update_followed_artists(&self) {
-        self.update_data::<FollowedArtists>("https://api.spotify.com/v1/me/following?type=artist", "./data/followed_artists.json");
+        self.update_data::<artists::Followed>("https://api.spotify.com/v1/me/following?type=artist", "./data/followed_artists.json");
     }
 
     pub fn update_followed_playlists(&self) {
-        self.update_data::<FollowedPlaylists>("https://api.spotify.com/v1/me/playlists", "./data/followed_playlists.json");
+        self.update_data::<playlists::Followed>("https://api.spotify.com/v1/me/playlists", "./data/followed_playlists.json");
     }
 
     pub fn update_saved_albums(&self) {
-        self.update_data::<SavedAlbums>("https://api.spotify.com/v1/me/albums", "./data/saved_albums.json");
+        self.update_data::<albums::Saved>("https://api.spotify.com/v1/me/albums", "./data/saved_albums.json");
     }
 
     // TODO add a way to call refresh_token only if the previous one has expired
@@ -101,7 +101,7 @@ impl SpotifyAPI {
         let res = self.http_client
             .post("https://accounts.spotify.com/api/token")
             .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Authorization", format!("Basic {}", encoded_auth))
+            .header("Authorization", format!("Basic {encoded_auth}"))
             .form(&form_data)
             .send();
 
@@ -144,7 +144,21 @@ impl SpotifyAPI {
 
 }
 
+fn read_from_env_file(var_name: &str) -> String {
+    dotenvy::var(var_name).unwrap_or_else(|_| {
+        eprintln!("could not read {var_name} from .env file");
+        String::new()
+    })
+}
+
 fn save_to_file<T>(data: T, path: &str) where T: Serialize {
-    let str = serde_json::to_string_pretty(&data).unwrap();
-    std::fs::write(path, str).unwrap();
+    let Ok(str) = serde_json::to_string_pretty(&data) else {
+        eprintln!("could not serialize data of type {}", std::any::type_name_of_val(&data));
+        return;
+    };
+
+    if matches!(std::fs::write(path, str), Ok(())) {} else {
+        eprintln!("could not write serialized data to file with path: {path}");
+    }
+
 }

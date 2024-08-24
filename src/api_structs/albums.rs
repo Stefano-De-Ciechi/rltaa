@@ -6,10 +6,19 @@ use crate::api_structs::artists::Artist;
 */
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SavedAlbums {
+pub struct Saved {
     total: u32,
     items: Vec<SavedAlbumsItem>,
 } 
+
+impl Saved {
+    const fn empty() -> Self {
+        Self {
+            total: 0,
+            items: vec![],
+        }
+    }
+}
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Serialize)]
@@ -50,7 +59,7 @@ struct TracksItem {
     name: String,
 }
 
-pub fn debug_print_saved_albums(albums: &Vec<SavedAlbumsItem>) {
+pub fn debug_print_saved(albums: &Vec<SavedAlbumsItem>) {
     println!("\n===== ALBUMS =====\ntotal: {}", albums.len());
     println!("{:<50} | {:<11}", "name", "tot. tracks");
     println!("{}", "-".repeat(200));
@@ -61,10 +70,24 @@ pub fn debug_print_saved_albums(albums: &Vec<SavedAlbumsItem>) {
     }
 }
 
-pub fn get_saved_albums(file_path: &str) -> Vec<SavedAlbumsItem> {
-    let file = File::open(file_path).expect("could not open the JSON file");
+pub fn get_saved() -> Vec<SavedAlbumsItem> {
+    get_saved_p("./data/saved_albums.json")
+}
+
+pub fn get_saved_p(file_path: &str) -> Vec<SavedAlbumsItem> {
+    let Ok(file) = File::open(file_path) else { 
+        eprintln!("couldn't open followed_artists.json");
+        return vec![];
+    };
+
     let reader = BufReader::new(file);
 
-    let saved_albums: SavedAlbums = serde_json::from_reader(reader).unwrap();
-    saved_albums.items
+    let albums: Saved = serde_json::from_reader(reader)
+        .unwrap_or_else(|_| {
+            eprintln!("couldn't deserialize followed artists from json file");
+            Saved::empty()
+    });
+
+    albums.items
+
 }

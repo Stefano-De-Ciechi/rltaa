@@ -2,8 +2,16 @@ use crate::api_structs::{Serialize, Deserialize, File, BufReader, ExternalUrls};
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
-pub struct FollowedArtists {
+pub struct Followed{
     pub artists: FollowedArtistsItems,
+}
+
+impl Followed {
+    const fn empty() -> Self {
+        Self {
+            artists: FollowedArtistsItems { items: vec![], total: 0 }
+        } 
+    }
 }
 
 /*
@@ -30,25 +38,35 @@ pub struct Artist {
     #[serde(alias = "type")] pub obj_type: String, 
 }
 
-pub fn debug_print_followed_artists(artists: &Vec<Artist>) {
+pub fn debug_print_followed(artists: &Vec<Artist>) {
     println!("\n===== ARTISTS =====\ntotal: {}", artists.len());
     println!("{:<50} | {:<150}", "name", "genres");
     println!("{}", "-".repeat(200));
 
     for a in artists {
-        let genres = match &a.genres {
-            Some(g) => g,
-            None => &vec![],
-        };
+        let genres: &Vec<String> = if let Some(g) = &a.genres { g } else { &vec![] };
         println!("{:<50} | {:<150?}", a.name, genres);
     }
 }
 
-pub fn get_followed_artists(file_path: &str) -> Vec<Artist> {
-    let file = File::open(file_path).expect("could not open the JSON file");
+pub fn get_followed() -> Vec<Artist> {
+    get_followed_p("./data/followed_artists.json")
+}
+
+pub fn get_followed_p(file_path: &str) -> Vec<Artist> {
+    let Ok(file) = File::open(file_path) else { 
+        eprintln!("couldn't open followed_artists.json");
+        return vec![];
+    };
+
     let reader = BufReader::new(file);
 
-    let artists: FollowedArtists = serde_json::from_reader(reader).unwrap();
+    let artists: Followed = serde_json::from_reader(reader)
+        .unwrap_or_else(|_| {
+            eprintln!("couldn't deserialize followed artists from json file");
+            Followed::empty()
+    });
+
     artists.artists.items 
 }
 
