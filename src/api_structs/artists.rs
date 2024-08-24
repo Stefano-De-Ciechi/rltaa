@@ -1,4 +1,5 @@
-use crate::api_structs::{Serialize, Deserialize, File, BufReader, ExternalUrls};
+use crate::api_structs;
+use crate::api_structs::{Empty, Items, Serialize, Deserialize, ExternalUrls};
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
@@ -6,11 +7,17 @@ pub struct Followed{
     pub artists: FollowedArtistsItems,
 }
 
-impl Followed {
-    const fn empty() -> Self {
+impl Empty<Self> for Followed {
+    fn empty() -> Self {
         Self {
             artists: FollowedArtistsItems { items: vec![], total: 0 }
         } 
+    }
+}
+
+impl Items<Artist> for Followed {
+    fn items(self) -> Vec<Artist> {
+        self.artists.items
     }
 }
 
@@ -54,19 +61,6 @@ pub fn get_followed() -> Vec<Artist> {
 }
 
 pub fn get_followed_p(file_path: &str) -> Vec<Artist> {
-    let Ok(file) = File::open(file_path) else { 
-        eprintln!("couldn't open followed_artists.json");
-        return vec![];
-    };
-
-    let reader = BufReader::new(file);
-
-    let artists: Followed = serde_json::from_reader(reader)
-        .unwrap_or_else(|_| {
-            eprintln!("couldn't deserialize followed artists from json file");
-            Followed::empty()
-    });
-
-    artists.artists.items 
+    api_structs::deserialize_from_file::<Followed, Artist>(file_path)
 }
 

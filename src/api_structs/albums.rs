@@ -1,4 +1,5 @@
-use crate::api_structs::{Deserialize, Serialize, ExternalUrls, File, BufReader};
+use crate::api_structs;
+use crate::api_structs::{Empty, Items, Deserialize, Serialize, ExternalUrls};
 use crate::api_structs::artists::Artist;
 
 /*
@@ -11,12 +12,18 @@ pub struct Saved {
     items: Vec<SavedAlbumsItem>,
 } 
 
-impl Saved {
-    const fn empty() -> Self {
+impl Empty<Self> for Saved {
+    fn empty() -> Self {
         Self {
             total: 0,
             items: vec![],
         }
+    }
+}
+
+impl Items<SavedAlbumsItem> for Saved {
+    fn items(self) -> Vec<SavedAlbumsItem> {
+        self.items
     }
 }
 
@@ -75,19 +82,5 @@ pub fn get_saved() -> Vec<SavedAlbumsItem> {
 }
 
 pub fn get_saved_p(file_path: &str) -> Vec<SavedAlbumsItem> {
-    let Ok(file) = File::open(file_path) else { 
-        eprintln!("couldn't open followed_artists.json");
-        return vec![];
-    };
-
-    let reader = BufReader::new(file);
-
-    let albums: Saved = serde_json::from_reader(reader)
-        .unwrap_or_else(|_| {
-            eprintln!("couldn't deserialize followed artists from json file");
-            Saved::empty()
-    });
-
-    albums.items
-
+    api_structs::deserialize_from_file::<Saved, SavedAlbumsItem>(file_path)
 }

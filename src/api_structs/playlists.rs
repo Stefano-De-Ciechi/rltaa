@@ -1,4 +1,5 @@
-use crate::api_structs::{Deserialize, Serialize, ExternalUrls, Owner, BufReader, File};
+use crate::api_structs;
+use crate::api_structs::{Empty, Items, Deserialize, Serialize, ExternalUrls, Owner};
 
 /*
 * ignored fields: href, limit, next, offset, previous
@@ -10,12 +11,18 @@ pub struct Followed {
     total : u32,
 }
 
-impl Followed {
-    const fn empty() -> Self {
+impl Empty<Self> for Followed {
+    fn empty() -> Self {
         Self {
             items: vec![],
             total: 0,
         }
+    }
+}
+
+impl Items<Playlist> for Followed {
+    fn items(self) -> Vec<Playlist> {
+        self.items
     }
 }
 
@@ -61,19 +68,5 @@ pub fn get_followed() -> Vec<Playlist> {
 }
 
 pub fn get_followed_p(file_path: &str) -> Vec<Playlist> {
-    let Ok(file) = File::open(file_path) else {
-        eprintln!("couldn't open followed_playlists.json");
-        return vec![];
-    };
-
-    let reader = BufReader::new(file);
-
-    let playlists: Followed = serde_json::from_reader(reader)
-        .unwrap_or_else(|_| {
-            eprintln!("couldn't deserialize followed playlists from json file");
-            Followed::empty()
-    });
-
-    playlists.items
- 
+     api_structs::deserialize_from_file::<Followed, Playlist>(file_path)
 }

@@ -1,6 +1,7 @@
 use reqwest::{self};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::api_structs;
 use crate::api_structs::{albums, artists, playlists};
 use base64::{engine::general_purpose, Engine};
 
@@ -72,7 +73,7 @@ impl SpotifyAPI {
             return;
         };
 
-        save_to_file(&data, path);
+        api_structs::serialize_to_file(&data, path);
 
     }
 
@@ -123,13 +124,11 @@ impl SpotifyAPI {
         };
 
         self.token = res_json.access_token;
-        //env::set_var("TOKEN", &self.token);
         eprintln!("new access token received");
 
         match res_json.refresh_token {
             Some(token) => {
                 self.refresh_token = token;
-                //env::set_var("REFRESH_TOKEN", &self.refresh_token);
             },
             None => eprintln!("no refresh token received"),
         };
@@ -151,14 +150,3 @@ fn read_from_env_file(var_name: &str) -> String {
     })
 }
 
-fn save_to_file<T>(data: T, path: &str) where T: Serialize {
-    let Ok(str) = serde_json::to_string_pretty(&data) else {
-        eprintln!("could not serialize data of type {}", std::any::type_name_of_val(&data));
-        return;
-    };
-
-    if matches!(std::fs::write(path, str), Ok(())) {} else {
-        eprintln!("could not write serialized data to file with path: {path}");
-    }
-
-}
