@@ -1,14 +1,11 @@
 /*
 * author: Stefano De Ciechi
-* purpose: create a simple gui for zotify, a spotify downloader
+* purpose: generate ascii art starting from song lyrics retrieved from spotify and genius api
 * date: 2024-07-25
 */
 
-mod api_structs;
-mod spotify_api;
-
-use api_structs::{albums, artists, playlists};
-use spotify_api::SpotifyAPI;
+use spotify_api_wrapper::api_structs::{albums, artists, playlists};
+use spotify_api_wrapper::SpotifyAPI;
 
 use dotenvy::dotenv;
 
@@ -22,15 +19,17 @@ fn main() {
         }
     }
 
-    if false { 
+    if false {
         let mut api_client = SpotifyAPI::new();
-
+        
         api_client.refresh_token();
         api_client.update_followed_artists();
         api_client.update_followed_playlists();
         api_client.update_saved_albums();
+        //api_client.search_data("Tell+me+I'm+pretty", "album", 5);
     }
 
+    
     let artists = artists::get_followed();
     artists::debug_print_followed(&artists);
 

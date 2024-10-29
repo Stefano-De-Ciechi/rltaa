@@ -1,0 +1,8 @@
+[package]
+name = "rltaa"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spotify_api_wrapper = { path = "../libs/spotify_api_wrapper/" }
+dotenvy = "0.15.7"
